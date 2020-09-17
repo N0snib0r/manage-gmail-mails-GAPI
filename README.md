@@ -1,10 +1,11 @@
-# Google APi para PHP
+# Google Gmail API para PHP
 
 ## Esta app puede: 
-- Listar correos por etiqueta
-- Listar correos por busqueda
-- Mostrar contenido de un correo
-- Enviar un correo con adjuntos
+- Listar correos por etiqueta.
+- Listar correos por busqueda.
+- Mostrar contenido de un correo.
+- Enviar un correo.
+- Enviar correo con archivos adjuntos.
 
 ## Requerimientos
 - La API necesita de unas credenciales unicas de la App registrada en Google developers [Google developers](https://console.developers.google.com/)
@@ -20,7 +21,7 @@
 5. Dentro de la credencial;  llenar el campo **URIs** *ej: http://example/gg-gmail/gmail*.
 6. Descargar las credenciales en formato JSON y guardarlo en la carpeta **credentials/**
 
-## Configuracion
+## Configuración
 ### config/config.php
 - Cambiar la ruta maestra por la ruta de tu directorio raiz
 ### downloads/
