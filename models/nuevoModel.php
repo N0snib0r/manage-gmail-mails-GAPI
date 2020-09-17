@@ -5,16 +5,13 @@ class NuevoModel extends Model{
 
     function __construct() {
         parent::__construct();
-        $this->userId = 'me';
+        $this->userId = 'me'; // Palabra clave, hace referencia la correo del usuario registrado
 
-        $this->client = $this->conn->getClient();
-        $this->service = $this->createService();
+        $this->client = $this->conn->getClient(); // Cliente registrado
+        $this->service = $this->createService();  // Servicio principal de Gmail
     }
 
-    function send($content) {
-        // echo '<pre>';
-        // print_r($content);
-        // echo '</pre>';
+    function send($content) { // Envia un correo 
         $boundary = uniqid(rand(), true);
         $message = new Google_Service_Gmail_Message();
         //CREAR EL MENSAJE
@@ -25,58 +22,42 @@ class NuevoModel extends Model{
         $rawMessageString .= 'Content-type: Multipart/Mixed; boundary="' . $boundary . '"' . "\r\n";
         $rawMessageString .= "\r\n--{$boundary}\r\n";
 
-        $rawMessageString .= "Content-Type: text/plain; charset=utf-8\r\n"; //plain / html
+        $rawMessageString .= "Content-Type: text/plain; charset=utf-8\r\n"; // text/html | text/plain
         $rawMessageString .= 'Content-Transfer-Encoding: quoted-printable' . "\r\n\r\n";
-        // $rawMessageString .= 'Content-Transfer-Encoding: base64' . "\r\n\r\n";
-
-        // $rawMessageString .= "{$content['body']}\r\n";
         foreach ($content['body'] as $value) {
-            // $rawMessageString .= "{$content['body']}\r\n";
             $rawMessageString .= "{$value}\r\n";
         }
         $rawMessageString .= "--{$boundary}\r\n";
 
         if(!empty($content['attach'])) {
-
-            foreach ($content['attach'] as $key => $file) {
-                $array = explode('/', $file['tmp_name']);
-                $finfo = finfo_open(FILEINFO_MIME_TYPE); // return mime type ala mimetype extension
-                // $mimeType = finfo_file($finfo, $filePath);
+            foreach ($content['attach'] as $file) {
                 $mimeType = $file['type'];
-                // $fileName = $array[sizeof($array)-1];
                 $fileName = $file['name'];
-                // $fileData = base64_encode(file_get_contents($file['tmp_name']));
 
                 $rawMessageString .= "\r\n--{$boundary}\r\n";
                 $rawMessageString .= 'Content-Type: '. $mimeType .'; name="'. $fileName .'";' . "\r\n";
-                // $rawMessageString .= 'Content-ID: <' ."me". '>' . "\r\n";            
                 $rawMessageString .= 'Content-Description: ' . $fileName . ';' . "\r\n";
                 $rawMessageString .= 'Content-Disposition: attachment; filename="' . $fileName . '"; size=' . $file['size']. ';' . "\r\n";
-                // $rawMessageString .= 'Content-Disposition: attachment; ';
-                // $rawMessageString .= "filename=" . $fileName . "\r\n";
                 $rawMessageString .= 'Content-Transfer-Encoding: base64' . "\r\n\r\n";
                 $rawMessageString .= chunk_split(base64_encode(file_get_contents($file['tmp_name'])), 76, "\n") . "\r\n";
-                // $rawMessageString .= "$contFile\r\n";
-                // $rawMessageString .= "\r\n";
                 $rawMessageString .= "--{$boundary}\r\n";
             }
         }
 
         try {
-        //Codificar el mensaje
+        //Codificar el mensaje en base64
         $rawMessage = self::base64UrlEncode($rawMessageString);
         $message->setRaw($rawMessage);
-
+        //Enviado del correo
         $message = $this->service->users_messages->send($this->userId, $message);
-        // print 'Mensaje con ID: ' . $message->getId() . ' enviado.';
-        // return $message;
+
         return true;
         } catch (Exception $e) {
             return false;
         }
     }
 
-    static function base64UrlEncode($data, $pad = null) {
+    static function base64UrlEncode($data, $pad = null) { // Codificado base64
         $data = str_replace(array('+', '/'), array('-', '_'), base64_encode($data));
         if(!$pad) {
             $data = rtrim($data, "=");
@@ -84,7 +65,7 @@ class NuevoModel extends Model{
         return $data;
     }
 
-    function createService() {
+    function createService() { // Creacion del servicio
         // Inicializamos el servicio de Google Drive
         $service = new Google_Service_Gmail($this->client);
         return $service;

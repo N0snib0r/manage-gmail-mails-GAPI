@@ -2,7 +2,8 @@
 
 use Google\Auth\Cache\Item;
 
-include_once 'models/mensaje.php';
+// Clases auxiliares para envio de datos ordenado
+include_once 'models/mensaje.php'; 
 include_once 'models/adjunto.php';
 
 class GmailModel extends Model{
@@ -10,13 +11,13 @@ class GmailModel extends Model{
 
     function __construct() {
         parent::__construct();
-        $this->userId = 'me';
+        $this->userId = 'me'; // Palabra clave, hace referencia la correo del usuario registrado
 
-        $this->client = $this->conn->getClient();
-        $this->service = $this->createService();
+        $this->client = $this->conn->getClient(); // Cliente registrado
+        $this->service = $this->createService();  // Servicio principal de Gmail
     }
 
-    function listMessages($labelId="INBOX",$q) {
+    function listMessages($labelId="INBOX",$q) { // Lista los correos | Por defecto lista INBOX
         $items = [];
         //Creamos las varibles necesarios
         $pageToken = null;
@@ -24,32 +25,35 @@ class GmailModel extends Model{
 
         //Parametros de list()
         $opt_param = array(
-            'includeSpamTrash' => false,
-            'labelIds' => $labelId,
-            'maxResults' => 5);
-        // if($labelId != null) $opt_param['labelIds'] = $q;
-        if(!empty($q)) $opt_param['q'] = $q;
+            'includeSpamTrash' => false, // No incluir spam en la busqueda
+            'labelIds' => $labelId,      // Etiqueta donde se obtendran los correos
+            'maxResults' => 5);          // Cantidad maxima de resultados e el listado
+
+        if(!empty($q)) $opt_param['q'] = $q; // Palabra que se buscara en los correos
 
         //Parametros de get()
-        $optParamGet = array('format' => 'metadata',
-        'metadataHeaders' => array('from','subject'));
+        $optParamGet = array('format' => 'metadata',   // Solo devulve metadatos
+        'metadataHeaders' => array('from','subject')); // Metadatos que devolvera
         
         try {
             if($pageToken) {
                 $opt_param['pageToken'] = $pageToken;
             }
+            //Obtiene un listado con los ID de los mensajes
             $messagesResponse = $this->service->users_messages->listUsersMessages($this->userId, $opt_param);
+
             if($messagesResponse->getMessages()) {
                 $messages = array_merge($messages, $messagesResponse->getMessages());
                 $pageToken = $messagesResponse->getNextPageToken();
 
                 foreach ($messages as $row) {
-                    $item = new Mensaje();
+                    $item = new Mensaje(); // Objeto auxiliar
+                    // Obtiene la metadata de cada mensaje por su ID
                     $msg = $this->service->users_messages->get($this->userId, $row->getId(), $optParamGet);
 
-                    $item->idMsg = $row->getId();
+                    $item->idMsg = $row->getId(); // Guarda el ID del mensaje
 
-                    switch ($msg->payload->headers[0]->name) {
+                    switch ($msg->payload->headers[0]->name) { // Variantes del orden de la metadata
                         case 'Subject':
                             $item->subject = $msg->getPayload()->getHeaders()[0]->value;
                             $item->from = $msg->getPayload()->getHeaders()[1]->value;
@@ -59,72 +63,44 @@ class GmailModel extends Model{
                             $item->subject = $msg->getPayload()->getHeaders()[1]->value;
                         break;
                     }
-                    
-                    // if($msg->payload->headers[0]->name == "subject") $item->subject = $msg->getPayload()->getHeaders()[0]->value;
-                    // elseif($msg->payload->headers[1]->name == "subject") $item->subject = $msg->getPayload()->getHeaders()[1]->value;
-
-                    // $item->from = $msg->getPayload()->getHeaders()[1]->value;
 
                     array_push($items, $item);
-                    
-                    // echo '<pre>';
-                    // // print_r($msg->getPayload()->headers);
-                    // print_r($msg->getLabelIds());
-                    // echo '</pre>';
                 }
-                return $items;
+                return $items; // Retorna un mensaje con los datos de todos los mensajes
             }
         } catch(Exception $e) {
             return [];
         }
     }
 
-    function read($id) {
-        $items = [];
-
-        $pageToken = NULL;
-        $messages = array();
+    function read($id) { // Obtiene el contenido de un correo
+        $attachs = [];
 
         //Parametros para obtener metadatos
-        $optParamMet = array('format' => 'metadata',
+        $optParam = array('format' => 'metadata',
                             'metadataHeaders' => array('from', 'subject'));
 
         try {
-            $msgMet = $this->service->users_messages->get($this->userId,$id,$optParamMet);
+            // Obtiene la metadata del correo
+            $msgMet = $this->service->users_messages->get($this->userId,$id,$optParam);
+            // Obtiene todo el contenido del correo
             $msgFull = $this->service->users_messages->get($this->userId,$id);
 
+            // Obtiene los datos de los archivos adjuntos
             $attachParts = $msgFull->getPayload()->getParts();
 
             for ($i=1; $i<count($attachParts); $i++) {
-                $attach = new Adjunto();
-                $attach->idAttach = $attachParts[$i]->body->attachmentId;
+                $attach = new Adjunto(); // Objeto auxiliar
+                $attach->idAttach = $attachParts[$i]->body->attachmentId; // Identificador del archivo Adjunto
                 $attach->nameFile = $attachParts[$i]->filename;
                 $attach->idPart = $attachParts[$i]->partId;
-
-                array_push($items, $attach);
+                
+                array_push($attachs, $attach);
             }
-            
-            // echo '<pre class="text-white">';
-            // print_r($attachParts);
-            // echo '</pre>';
+            $item = new Mensaje(); // Objeto auxiliar
 
-            // $attachmentData = $this->service->users_messages_attachments->get($this->userId,$id,$attach);
-
-            // $data = strtr($attachmentData->getData(), array('-' => '+', '_' => '/'));
-            // $data = self::base64UrlDecode($attachmentData->data);
-            // $myfile = fopen("downloads/wallpaper.asd", "w+");
-            // fwrite($myfile, $data);
-            // fclose($myfile);
-
-            // $decodedData = strtr($attachmentData, array('-' => '+', '_' => '/'));
-            // $attachData = self::base64UrlDecode($msgAttach->data);
-
-            // echo '<a href="'.$attachData.'"></a>';
-
-            $item = new Mensaje();
-
-            // $bdy = self::base64UrlDecode($msgFull->payload->parts[1]->body->data);
-
+            // Variantes de formatos de los correos
+            //Obtiene el contenido del mensaje y lo decodifica
             if(isset($msgFull->getPayload()->parts[1]->body->data)) {
                 $bdy = self::base64UrlDecode($msgFull->payload->parts[1]->body->data);
             } elseif (isset($msgFull->getPayload()->getParts()[0]->parts[1]->body->data)) {
@@ -132,10 +108,9 @@ class GmailModel extends Model{
             } elseif (isset($msgFull->getPayload()->getBody()->data)) {
                 $bdy = self::base64UrlDecode($msgFull->getPayload()->getBody()->data);
             }
-
             $item->body = $bdy;
 
-            switch ($msgMet->payload->headers[0]->name) {
+            switch ($msgMet->payload->headers[0]->name) { // Variantes del orden de la metadata obtenida
                 case 'Subject':
                     $item->subject = $msgMet->getPayload()->getHeaders()[0]->value;
                     $item->from = $msgMet->getPayload()->getHeaders()[1]->value;
@@ -146,25 +121,17 @@ class GmailModel extends Model{
                 break;
             }
             $item->idMsg = $id[0];
-            $item->attachments = $items;
-
-            // array_push($item, $items);
-
-            // echo '<pre class="text-white">';
-            // print_r($msg->payload->parts[0]->body->data);
-            // print_r($item);
-            // echo '</pre>';
+            $item->attachments = $attachs;
             
-            return $item;
+            return $item; // Retorna un objeto con todo el contenido del correo
             
         } catch(Exception $e) {
             return [];
         }
-
     }
 
-    function downloadAll($idMsg) {
-        $pathDir = "downloads/";
+    function downloadAll($idMsg) { // Descarga todos los archivos adjuntos de un correo
+        $pathDir = "downloads/"; // Ruta de destino de los archivos descargados
         
         try {
             $msg = $this->service->users_messages->get($this->userId,$idMsg);
@@ -175,6 +142,7 @@ class GmailModel extends Model{
                 $idAttach = $attachParts[$i]->body->attachmentId;
                 $nameFile = $attachParts[$i]->filename;
 
+                //Obtiene la data del archivo adjunto
                 $attachmentData = $this->service->users_messages_attachments->get($this->userId,$idMsg,$idAttach);
 
                 $data = self::base64UrlDecode($attachmentData->data);
@@ -182,32 +150,25 @@ class GmailModel extends Model{
                 $fd = fopen($pathDir.$nameFile, "w+");
                 fwrite($fd, $data);
                 fclose ($fd);
-                // exit;
             }
             
         } catch (Exception $e) {
-            
+            echo $e->getMessage();
         }
     }
 
-    function download($param) {
-        $id = $param[0]; //idMesssage
-        $idAttach = $param[1];
-        $nameFile = $param[2];
+    function download($param) { // Descarga solo un archivo adjunto
+        $id = $param[0];       // ID del mensaje
+        $idAttach = $param[1]; // ID del archivo adjunto
+        $nameFile = $param[2]; // nombre del archivo
+        $pathFile = "downloads/".$nameFile; // Ruta de la descarga
 
+        // Obtiene la data del archivo adjunto
         $attachmentData = $this->service->users_messages_attachments->get($this->userId,$id,$idAttach);
-
-        $pathFile = "downloads/".$nameFile;
-
-        // echo '<pre>';
-        // print_r($param);
-        // echo '</pre>';
-
-        // $data = strtr($attachmentData->getData(), array('-' => '+', '_' => '/'));
-        
+        // Decodificado de base64
         $data = self::base64UrlDecode($attachmentData->data);
 
-        try {
+        try { // Creacion del archivo en el servidor
             $fd = fopen($pathFile, "w+");
             fwrite($fd, $data);
             fclose ($fd);
@@ -217,20 +178,11 @@ class GmailModel extends Model{
         }
     }
 
-    static function base64ToJPEG($base64_string, $content_type) { // En desuso
-        $find = ["_","-"]; $replace = ["/","+"];
-        $base64_string = str_replace($find,$replace,$base64_string);
-        $url_str = 'data:'.$content_type.','.$base64_string;
-        $base64_string = "url(".$url_str.")";
-        $data = explode(',', $base64_string);
-        return base64_decode( $data[ 1 ] );
-    }
-
-    static function base64UrlDecode($data) {
+    static function base64UrlDecode($data) { // Decodificado base64
         return base64_decode(str_replace(array('-', '_'), array('+', '/'), $data));
     }
 
-    function isRegister() { //Verifica si el usuario ya esta registrado
+    function isRegister() { // Verifica si el usuario ya esta registrado
         return $this->conn->isConnected();
     }
 
@@ -238,8 +190,7 @@ class GmailModel extends Model{
         return $this->conn->getAuthData();
     }
 
-    function createService() {
-        // Inicializamos el servicio de Google Drive
+    function createService() { // Inicializamos el servicio de Google Drive
         $service = new Google_Service_Gmail($this->client);
         return $service;
     }
