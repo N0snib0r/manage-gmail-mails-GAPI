@@ -18,8 +18,8 @@
         
         <div class="center"><?php echo $this->mensaje; ?></div>
 
-        <h1 class="center">Vista principal de Main</h1>
-
+        <h1 class="center">Vista principal API Gmail</h1>
+        
     </div>
     <?php require 'views/footer.php' ?>
 </body>

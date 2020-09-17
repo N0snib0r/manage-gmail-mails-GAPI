@@ -34,8 +34,8 @@ class Connection {
 
     function createClient() {
         $client = new Google_Client();
-        $client->setApplicationName('Google Drive API');
-        $client->setScopes(Google_Service_Drive::DRIVE);
+        $client->setApplicationName('Google Gmail API');
+        $client->setScopes(Google_Service_Gmail::MAIL_GOOGLE_COM);
         $client->setAuthConfig($this->credentials);
         $client->setAccessType('offline');
         $client->setPrompt('select_account consent');
@@ -72,7 +72,7 @@ class Connection {
             //Una vez creado el accestoken lo codifica a JSON y lo guarda en la ruta del token
             file_put_contents($tokenPath, json_encode($client->getAccessToken()));
         } else {
-            // echo "<p>Token no expirado</p>";
+            echo "<p>Token no expirado</p>";
         }
         $this->is_connected = true;
         return $client;
