@@ -22,7 +22,7 @@ class NuevoModel extends Model{
         $rawMessageString .= 'Content-type: Multipart/Mixed; boundary="' . $boundary . '"' . "\r\n";
         $rawMessageString .= "\r\n--{$boundary}\r\n";
 
-        $rawMessageString .= "Content-Type: text/plain; charset=utf-8\r\n"; // text/html | text/plain
+        $rawMessageString .= "Content-Type: text/html; charset=utf-8\r\n"; // text/html | text/plain
         $rawMessageString .= 'Content-Transfer-Encoding: quoted-printable' . "\r\n\r\n";
         foreach ($content['body'] as $value) {
             $rawMessageString .= "{$value}\r\n";

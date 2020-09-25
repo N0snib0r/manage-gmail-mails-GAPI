@@ -27,7 +27,7 @@ class GmailModel extends Model{
         $opt_param = array(
             'includeSpamTrash' => false, // No incluir spam en la busqueda
             'labelIds' => $labelId,      // Etiqueta donde se obtendran los correos
-            'maxResults' => 5);          // Cantidad maxima de resultados e el listado
+            'maxResults' => 7);          // Cantidad maxima de resultados e el listado
 
         if(!empty($q)) $opt_param['q'] = $q; // Palabra que se buscara en los correos
 
@@ -147,7 +147,7 @@ class GmailModel extends Model{
 
                 $data = self::base64UrlDecode($attachmentData->data);
 
-                $fd = fopen($pathDir.$nameFile, "w+");
+                $fd = fopen($pathDir.$nameFile, "w+"); // Tipo de descarga
                 fwrite($fd, $data);
                 fclose ($fd);
             }

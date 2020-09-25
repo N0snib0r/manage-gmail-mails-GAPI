@@ -14,12 +14,13 @@
 ### Pasos
 1. Registrarse con una cuenta de google en [Google developers](https://console.developers.google.com/).
 2. Crear un proyecto.
-3. Crear la pantalla de consentimiento (Solo es necesario el nombre)
+3. Buscar la API de Google que necesitas en el buscador **Google Drive API**, y activarla.
+4. Crear la pantalla de consentimiento (Solo es necesario el nombre)
     - Solo es necesario el nombre de la App.
-    - En caso de querer colocar mas informacion de la App (imagen, modo privado) requerira verificacion.
-4. Crear credenciales de tipo **ID de cliente OAuth**.
-5. Dentro de la credencial;  llenar el campo **URIs** *ej: http://example/gg-gmail/gmail*.
-6. Descargar las credenciales en formato JSON y guardarlo en la carpeta **credentials/**
+    - En caso de querer colocar mas información de la App (imagen, modo privado) requerira verificación.
+5. Crear credenciales de tipo **ID de cliente OAuth**.
+6. Dentro de la credencial;  llenar el campo **URIs** *ej: http://example/gg-gmail/gmail*.
+7. Descargar las credenciales en formato JSON y guardarlo en la carpeta **credentials/**
 
 ## Configuración
 ### config/config.php
@@ -34,4 +35,4 @@
 - *Line 9*: Colocar el nombre de las nuevas credenciales de la App (El nombre puede variar).
 
 ## Funcionamiento
-- Para cargar la pantalla principal coloqeue la ruta: http://{SERVER}/{RAIZ}/main | *ej: http://example/gg-gmail/gmail*.*
+- Para cargar la pantalla principal coloqeue la ruta: http://{SERVER}/{RAIZ}/main | *ej: http://example/gg-gmail/gmail*
